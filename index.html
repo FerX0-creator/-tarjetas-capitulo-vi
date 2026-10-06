@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flash Cards — Capítulo VI</title>
+<style>
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  margin: 0; background: #f4f5f7; color: #111;
+}
+.wrap { max-width: 760px; margin: 0 auto; padding: 22px; }
+h1 { font-size: 1.45rem; margin: 0 0 6px; }
+.meta { color:#555; margin-bottom:16px; }
+.card {
+  min-height: 320px; background:#fff; border-radius:22px;
+  box-shadow:0 8px 28px rgba(0,0,0,.10);
+  display:flex; align-items:center; justify-content:center;
+  padding:30px; text-align:center; cursor:pointer; user-select:none;
+}
+.side { width:100%; }
+.label { font-size:.8rem; letter-spacing:.08em; text-transform:uppercase; color:#666; margin-bottom:14px; }
+.text { font-size:1.45rem; line-height:1.4; white-space:pre-wrap; }
+.topic { margin-top:18px; color:#666; font-size:.9rem; }
+.controls { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+button {
+  padding:13px 12px; border:0; border-radius:12px; background:#111; color:#fff;
+  font-size:1rem; cursor:pointer;
+}
+.secondary { background:#e4e6ea; color:#111; }
+.progress { margin-top:12px; text-align:center; color:#555; }
+.actions { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:10px; }
+@media (max-width:520px) {
+  .card { min-height: 360px; padding:22px; }
+  .text { font-size:1.25rem; }
+  .actions { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tarjetas — Capítulo VI</h1>
+  <div class="meta">Toca la tarjeta para ver la respuesta.</div>
+
+  <div class="card" id="card">
+    <div class="side">
+      <div class="label" id="label">Pregunta</div>
+      <div class="text" id="text"></div>
+      <div class="topic" id="topic"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="secondary" onclick="prevCard()">← Anterior</button>
+    <button onclick="nextCard()">Siguiente →</button>
+  </div>
+
+  <div class="actions">
+    <button class="secondary" onclick="shuffleCards()">Mezclar</button>
+    <button class="secondary" onclick="markKnown()">✓ La sé</button>
+    <button class="secondary" onclick="markReview()">× Repasar</button>
+  </div>
+
+  <div class="progress" id="progress"></div>
+</div>
+
+<script>
+let cards = [{"front": "Conjunto de <b>cabos y cables utilizados a bordo<\/b>.", "back": "Jarcia", "topic": "Tema_1"}, {"front": "Sostiene la <b>arboladura<\/b>; el capítulo la describe formada por cables.", "back": "Jarcia firme o muerta", "topic": "Tema_1"}, {"front": "Cabos y cables <b>móviles o que laborean<\/b>; permiten manejar el aparejo.", "back": "Jarcia de labor", "topic": "Tema_1"}, {"front": "Cabos y cables utilizados para <b>amarrar el buque<\/b>. Cobró importancia con la propulsión mecánica.", "back": "Jarcia de amarre", "topic": "Tema_1"}, {"front": "En la navegación a vela casi nunca se amarraba a muelle; el texto menciona el comienzo de la vida del buque, el desguace y el amarre entre boyas durante el desarme.", "back": "Jarcia: contexto histórico", "topic": "Tema_1"}, {"front": "Sostiene el <b>palo macho o mastelero<\/b> para que no caiga hacia <b>popa<\/b>. Los mástiles tienen ligera inclinación hacia popa; el estay ejerce esfuerzo hacia proa.", "back": "Estay", "topic": "Tema_2"}, {"front": "Similar al estay, de <b>menor mena<\/b>, para <b>soportar una vela<\/b>. También designa un cabo o cable que sostiene una estructura normalmente ligera en cubierta, como los patarrays de los toldos.", "back": "Nervio", "topic": "Tema_2"}, {"front": "Cable corto que sostiene <b>longitudinalmente el moco del bauprés<\/b>. En general: cabos o cables <b>horizontales<\/b> que aguantan estructuras.", "back": "Viento", "topic": "Tema_2"}, {"front": "Cable que hace de <b>estay del bauprés<\/b>.", "back": "Frenillo", "topic": "Tema_2"}, {"front": "Sujeta <b>transversalmente el palo macho a cubierta<\/b> o el <b>mastelero a su cofa<\/b>. Tira ligeramente hacia popa; junto con el estay mantiene firme el palo.", "back": "Obenque", "topic": "Tema_2"}, {"front": "Cabos <b>cortos y horizontales<\/b> amarrados a los obenques; hay varios obenques por banda.", "back": "Flechastes", "topic": "Tema_2"}, {"front": "<b>Obenques + flechastes<\/b> forman una escala para subir a los palos y realizar el aferrado o largado del aparejo.", "back": "Tabla de jarcia", "topic": "Tema_2"}, {"front": "Cada uno de los <b>obenques del bauprés<\/b>.", "back": "Mostacho", "topic": "Tema_2"}, {"front": "Obenque <b>provisional<\/b> para reforzar los obenques con <b>viento fuerte<\/b>.", "back": "Quinal", "topic": "Tema_2"}, {"front": "Sostiene <b>transversalmente los masteleros o mastelerillos a cubierta<\/b>.", "back": "Burda", "topic": "Tema_2"}, {"front": "Cabo o aparejo para <b>izar verga, pico o vela<\/b>; laborea en sentido <b>vertical<\/b>. También iza banderas.", "back": "Driza", "topic": "Tema_3"}, {"front": "Cabo amarrado directamente a verga, pico o bandera; al tirar de él <b>acelera el arriado<\/b>. Al lascar la driza, el elemento normalmente baja por gravedad.", "back": "Cargadera", "topic": "Tema_3"}, {"front": "Cabo, cable o aparejo en dirección <b>oblicua<\/b>, que mantiene verga, botavara o pico en el <b>plano vertical<\/b>. También posiciona el puntal de una pluma.", "back": "Amantillo", "topic": "Tema_3"}, {"front": "Mantiene en el <b>plano horizontal<\/b> el <b>pico de una cangreja<\/b> o el <b>puntal de una pluma<\/b>.", "back": "Osta", "topic": "Tema_3"}, {"front": "Posiciona en el <b>plano horizontal<\/b> la <b>botavara de una cangreja u otra vela<\/b>.", "back": "Escota", "topic": "Tema_3"}, {"front": "Mueve las <b>vergas en el plano horizontal<\/b> para orientar las velas al viento.", "back": "Braza", "topic": "Tema_3"}, {"front": "Operación de <b>mover u orientar las vergas<\/b> con las brazas.", "back": "Bracear", "topic": "Tema_3"}, {"front": "Cables y cabos de fibras <b>vegetales o sintéticas de gran mena<\/b>. Los cabos suelen ser <b>guindalezas o trenzados de 8 cordones<\/b>.", "back": "Jarcia de amarre: materiales", "topic": "Tema_4"}, {"front": "<b>Calabrotes de fibra de coco<\/b>, resistentes, usados para amarrados prolongados.", "back": "Cocos", "topic": "Tema_4"}, {"front": "Nombre vulgar de las amarras de <b>fibra vegetal o sintética<\/b>.", "back": "Estachas", "topic": "Tema_4"}, {"front": "Sale de <b>proa hacia proa<\/b> o de <b>popa hacia popa<\/b>.", "back": "Largo", "topic": "Tema_4"}, {"front": "Sale de <b>proa hacia popa<\/b> o de <b>popa hacia proa<\/b>. El dibujo utiliza la palabra <b>spring<\/b>.", "back": "Esprín o retenida", "topic": "Tema_4"}, {"front": "El texto la menciona con esprín y retenida, pero reserva el nombre a una amarra dada a un <b>punto firme algo distante<\/b>, sobre todo desde <b>popa<\/b>, para ayudar al <b>desatraque<\/b>.", "back": "Codera", "topic": "Tema_4"}, {"front": "Sale en dirección <b>transversal<\/b> desde proa, popa o centro del buque.", "back": "Través", "topic": "Tema_4"}, {"front": "Ayuda a evitar confusiones durante el atraque si el buque se desplaza respecto a la posición prevista.", "back": "Numeración de amarras", "topic": "Tema_4"}, {"front": "La <b>gaza del extremo<\/b> encaja o se <b>encapilla al noray<\/b>.", "back": "Por chicote", "topic": "Tema_4"}, {"front": "La amarra enlaza el noray por una <b>zona intermedia<\/b>; suele reforzar el amarrado.", "back": "Por seno", "topic": "Tema_4"}, {"front": "Cabo <b>delgado y resistente<\/b> para tender amarras en atraque, remolque o amarre a boya. Suele ser <b>vaivén o merlín<\/b>; el texto menciona nylon ligero para fusil lanzacabos. Lleva <b>piña o peso<\/b> en un extremo.", "back": "Guía", "topic": "Tema_5"}, {"front": "Guía de <b>mayor grosor<\/b>, eslabón entre <b>guía fina y amarra<\/b> a gran distancia. No unir directamente la guía fina a la amarra: podría romperse.", "back": "Mensajero", "topic": "Tema_5"}, {"front": "Adujar en la <b>mano izquierda<\/b>, empezando por el chicote opuesto al contrapeso. Tomar aproximadamente la mitad de las adujas con la derecha; lanzar esas primero, a ser posible contra el viento, y dejar salir después las de la izquierda.", "back": "Lanzamiento manual", "topic": "Tema_5"}, {"front": "Una guía fina puede lanzarse orbitando el contrapeso con un tramo de chicote. En el <b>fusil lanzacabos<\/b>, el contrapeso va en la boca del cañón y arrastra la guía; esta debe estar perfectamente adujada en su contenedor.", "back": "Lanzamiento por contrapeso o fusil lanzacabos", "topic": "Tema_5"}, {"front": "Une la guía a la <b>gaza de la estacha<\/b>. Se deshace fácilmente incluso encapillada. Un <b>ballestrinque<\/b> debe deshacerse antes de encapillar, perdiendo tiempo.", "back": "As de guía", "topic": "Tema_5"}, {"front": "Bien <b>adujada a bordo<\/b>, con el <b>chicote por fuera del costado<\/b>. Adujado a la <b>guacaresca<\/b> o formando senos sobre los <b>candeleros<\/b>.", "back": "Preparación de la amarra", "topic": "Tema_5"}, {"front": "La nueva se coloca <b>por debajo<\/b> de las anteriores para permitir desencapillar cualquiera; revisar el dibujo original para entender el recorrido.", "back": "Gazas en un noray ocupado", "topic": "Tema_5"}, {"front": "Deslizar la amarra alrededor del <b>noray<\/b> para <b>igualar las dos patas del seno<\/b>.", "back": "Rondar", "topic": "Tema_5"}, {"front": "Recoger el chicote cerca del buque, adujar cierta cantidad en el bote y llevar el chicote a proa. Largar según lo pida el movimiento: lento frena el bote; rápido hunde la estacha y puede dañar hélice o timón.", "back": "Tendido con embarcación", "topic": "Tema_5"}, {"front": "Dar la amarra a tierra con <b>guía<\/b>; entregar directamente la gaza es difícil y puede dañar el bote. Patrón experimentado: la estacha reduce maniobrabilidad; la fibra sintética ayuda por su poco peso. Si el punto está a <b>barlovento<\/b>, una solución es cargar toda la amarra, ir a tierra, encapillar y volver al buque remolcándola con viento favorable.", "back": "Llegada y barlovento", "topic": "Tema_5"}, {"front": "Mecanismo para realizar esfuerzos y entrar de las amarras: <b>tambor vertical<\/b>.", "back": "Cabrestante", "topic": "Tema_6"}, {"front": "Tiene <b>dos tambores solidarios, giratorios y horizontales<\/b> según este capítulo.", "back": "Chigre", "topic": "Tema_6"}, {"front": "Se dan varias vueltas al tambor y se aguanta el extremo <b>A<\/b>. El <b>rozamiento<\/b> permite obtener gran tracción en <b>B<\/b> con poco esfuerzo en A. Quien sostiene el cabo <b>aguanta al socaire<\/b>.", "back": "Socaire", "topic": "Tema_6"}, {"front": "<b>Entrar de una amarra<\/b> mediante la rotación del cabrestante.", "back": "Virar", "topic": "Tema_6"}, {"front": "Mantener la amarra <b>ligeramente bajo tensión<\/b>.", "back": "Templar", "topic": "Tema_6"}, {"front": "Girar el tambor en <b>sentido opuesto<\/b>, con distensión del cabo.", "back": "Desvirar", "topic": "Tema_6"}, {"front": "Aflojar el cabo disminuyendo la presión en <b>A<\/b>, sin necesidad de desvirar; puede hacerse incluso si el tambor gira en sentido de templar.", "back": "Lascar", "topic": "Tema_6"}, {"front": "Amarra <b>floja<\/b>. En un chigre ambos tambores giran a la vez: se puede virar una estacha y mantener la otra templada o en banda.", "back": "En banda", "topic": "Tema_6"}, {"front": "Evitar rotura por <b>exceso de carga<\/b>; mantener una persona al <b>socaire de la bita o cabrestante<\/b> para lascar si se tensa demasiado.", "back": "Estachas bajo tensión", "topic": "Tema_7"}, {"front": "Un <b>ligero alargamiento<\/b> puede indicar que el cabo está a punto de <b>faltar (romper)<\/b>.", "back": "Fibra vegetal", "topic": "Tema_7"}, {"front": "Admite <b>gran estiramiento<\/b> antes de faltar. El original dice que el alargamiento es «más alarmante»: conserva esa expresión para el examen; gran estiramiento no significa ausencia de peligro.", "back": "Fibra sintética", "topic": "Tema_7"}, {"front": "Es <b>escurridizo<\/b>: las vueltas tienden a resbalar; el texto prescribe <b>vueltas adicionales<\/b>.", "back": "Nylon en bitas", "topic": "Tema_7"}, {"front": "Mantiene <b>tensión constante<\/b>: <b>desvira cuando aumenta<\/b> y <b>vira cuando cede<\/b>. La tensión deseada se regula a voluntad.", "back": "Chigre automático", "topic": "Tema_7"}, {"front": "Se usó en <b>remolque<\/b> para evitar <b>estrechonazos o socollazos<\/b> y roturas; también en grandes buques al atracar, desatracar y permanecer amarrados. Compensa cambios de <b>marea<\/b> y <b>asiento<\/b> durante carga/descarga, mantiene amarras templadas y ahorra personal.", "back": "Chigre automático: usos y beneficios", "topic": "Tema_7"}, {"front": "En los sistemas primitivos, adujas externas se metían entre las internas por la tracción y las aplastaban o averiaban. Mejora: <b>una sola capa<\/b> en el tambor; el resto en <b>carretel de adujado automático<\/b>.", "back": "Chigre automático: estiba perfeccionada", "topic": "Tema_7"}, {"front": "Tener claros <b>chicote, seno, firme y cocas<\/b>, si existen.", "back": "Identificar el cabo", "topic": "Tema_8"}, {"front": "Pueden <b>templar en cualquier momento<\/b> y atrapar a una persona.", "back": "Nunca dentro de seno o coca", "topic": "Tema_8"}, {"front": "Si falta, sus dos partes actúan como <b>látigos<\/b>. Puede romper en la guía o arrancar <b>cornamusa, cáncamo o pasteca<\/b>.", "back": "Lejos del cabo en tensión", "topic": "Tema_8"}, {"front": "No colocarse bajo una carga que se <b>iza o arría<\/b>; aunque aguante el cabo, puede fallar el <b>cuadernal<\/b>.", "back": "Nunca debajo de un peso", "topic": "Tema_8"}, {"front": "<b>Chicote<\/b>: extremo; <b>seno<\/b>: curvatura o porción intermedia; <b>firme<\/b>: parte principal del cabo; <b>coca<\/b>: vuelta o retorcimiento accidental. <b>Mena<\/b>: circunferencia del cabo; <b>barlovento<\/b>: lado de donde viene el viento. Estas aclaraciones facilitan la lectura; no son nuevas definiciones desarrolladas por el capítulo.", "back": "Vocabulario de apoyo (añadido)", "topic": "Tema_8"}, {"front": "<b>Estay<\/b>: evita caída hacia popa. <b>Obenque<\/b>: palo macho a cubierta o mastelero a cofa, transversal. <b>Burda<\/b>: mastelero/mastelerillo a cubierta, transversal.", "back": "Estay / Obenque / Burda", "topic": "Comparaciones"}, {"front": "<b>Frenillo<\/b>: estay del bauprés. <b>Mostacho<\/b>: obenque del bauprés. <b>Viento<\/b>: sostiene longitudinalmente el moco del bauprés.", "back": "Frenillo / Mostacho / Viento", "topic": "Comparaciones"}, {"front": "<b>Amantillo<\/b>: plano vertical. En horizontal: <b>osta<\/b> = pico/puntal; <b>escota<\/b> = botavara/vela; <b>braza<\/b> = verga.", "back": "Amantillo / Osta / Escota / Braza", "topic": "Comparaciones"}, {"front": "<b>Driza iza<\/b>. <b>Cargadera acelera el arriado<\/b>, tirando de ella.", "back": "Driza / Cargadera", "topic": "Comparaciones"}, {"front": "<b>Largo<\/b>: proa-proa o popa-popa. <b>Esprín<\/b>: proa-popa o popa-proa. <b>Través<\/b>: transversal.", "back": "Largo / Esprín / Través", "topic": "Comparaciones"}, {"front": "<b>Guía fina → mensajero → amarra<\/b> al tender a gran distancia.", "back": "Guía fina / Mensajero / Amarra", "topic": "Comparaciones"}, {"front": "<b>Virar<\/b>: entrar con tambor. <b>Templar<\/b>: ligera tensión. <b>Desvirar<\/b>: invertir giro. <b>Lascar<\/b>: aflojar reduciendo presión, sin necesitar giro inverso.", "back": "Virar / Templar / Desvirar / Lascar", "topic": "Comparaciones"}, {"front": "<b>Desvira<\/b>; cuando la tensión cede, <b>vira<\/b>.", "back": "Chigre automático: regulación de la tensión", "topic": "Comparaciones"}, {"front": "Identificar partes; <b>no entrar en seno/coca<\/b>; <b>alejarse de cabos tensos<\/b>; <b>no ponerse bajo pesos izados o arriados<\/b>.", "back": "Precauciones de seguridad: cuatro principios", "topic": "Comparaciones"}];
+let order = cards.map((_,i)=>i);
+let pos = 0;
+let showingBack = false;
+let known = new Set();
+let review = new Set();
+
+function render() {
+  if (!cards.length) {
+    document.getElementById('text').textContent = 'No se encontraron tarjetas.';
+    document.getElementById('progress').textContent = '';
+    return;
+  }
+  const c = cards[order[pos]];
+  document.getElementById('label').textContent = showingBack ? 'Respuesta' : 'Pregunta';
+  document.getElementById('text').innerHTML = showingBack ? c.back : c.front;
+  document.getElementById('topic').textContent = c.topic ? ('Tema: ' + c.topic.replaceAll('_', ' ')) : '';
+  document.getElementById('progress').textContent =
+    `${pos+1} / ${cards.length} · Sabidas: ${known.size} · Repasar: ${review.size}`;
+}
+
+document.getElementById('card').addEventListener('click', () => {
+  showingBack = !showingBack; render();
+});
+
+function nextCard() {
+  pos = (pos + 1) % cards.length; showingBack = false; render();
+}
+function prevCard() {
+  pos = (pos - 1 + cards.length) % cards.length; showingBack = false; render();
+}
+function shuffleCards() {
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  pos = 0; showingBack = false; render();
+}
+function markKnown() {
+  known.add(order[pos]); review.delete(order[pos]); nextCard();
+}
+function markReview() {
+  review.add(order[pos]); known.delete(order[pos]); nextCard();
+}
+render();
+</script>
+</body>
+</html>
